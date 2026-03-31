@@ -1,180 +1,381 @@
 <template>
-  <a-layout style="min-height: 100vh">
+  <a-layout class="app-layout" :class="{ 'dark-mode': isDark }">
+    <header class="navbar" :class="{ 'scrolled': isScrolled }">
+      <div class="navbar-content">
+        <router-link to="/" class="logo">
+          <img src="@/assets/logo.png" alt="Logo" class="logo-img" />
+        </router-link>
+        
+        <nav class="nav-menu" :class="{ 'mobile-open': mobileMenuOpen }">
+          <router-link to="/" class="nav-link" @click="closeMobileMenu">Home</router-link>
+          <router-link to="/about" class="nav-link" @click="closeMobileMenu">About</router-link>
+          <router-link to="/contact" class="nav-link" @click="closeMobileMenu">Contact</router-link>
+        </nav>
 
-    <a-layout-header style="background-color: #001529">
-      <a-menu
-        mode="horizontal"
-        theme="dark"
-        style="line-height: 64px; display: flex; justify-content: center"
-      >
-        <a-menu-item key="5" style="margin-right: auto">
-          <router-link to="/">
-            <img
-              src="/favicon.ico"
-              alt="Logo"
-              style="height: 40px; border-radius: 20px"
-            />
-          </router-link>
-        </a-menu-item>
-        <a-menu-item key="1">
-          <router-link to="/" class="nav-link">Home</router-link>
-        </a-menu-item>
-        <a-menu-item key="2">
-          <router-link to="/about" class="nav-link">About</router-link>
-        </a-menu-item>
-        <a-menu-item key="3">
-          <router-link to="/projects" class="nav-link">Projects</router-link>
-        </a-menu-item>
-        <a-menu-item key="4">
-          <router-link to="/contact" class="nav-link">Contact</router-link>
-        </a-menu-item>
-      </a-menu>
-    </a-layout-header>
+        <div class="nav-actions">
+          <button class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Light Mode' : 'Dark Mode'">
+            <BulbOutlined v-if="!isDark" />
+            <BulbFilled v-else />
+          </button>
+          <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+            <MenuOutlined v-if="!mobileMenuOpen" />
+            <CloseOutlined v-else />
+          </button>
+        </div>
+      </div>
+    </header>
 
-    <a-layout-content style="padding: 24px; background-color: #f0f2f5">
-      <router-view />
+    <a-layout-content class="main-content">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" :is-dark="isDark" />
+        </transition>
+      </router-view>
     </a-layout-content>
 
-    <div class="chatbot-container" :class="{ 'chatbot-visible': showChat }">
-      <iframe
-        src="https://www.chatbase.co/chatbot-iframe/abPmfHcu5WC8SJMnd2Xaa"
-        width="100%"
-        height="100%"
-        frameborder="0"
-      ></iframe>
-    </div>
-
-    <button class="floating-button" @click="showChat = !showChat">
-      <component :is="showChat ? 'DownOutlined' : 'MessageOutlined'" />
-    </button>
-
-    <a-layout-footer style="text-align: center; background-color: #001529; color: white">
-      © {{ new Date().getFullYear() }} RVT
-    </a-layout-footer>  
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="social-links">
+          <a href="mailto:annemarizdelacruz@gmail.com" class="social-link" title="Email">
+            <MailOutlined />
+          </a>
+          <a href="https://linkedin.com/in/amadc" target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
+            <LinkedinOutlined />
+          </a>
+        </div>
+        <p class="copyright">© {{ new Date().getFullYear() }} Anne Mariz Dela Cruz. All rights reserved.</p>
+      </div>
+    </footer>
   </a-layout>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
-import { MessageOutlined, DownOutlined } from "@ant-design/icons-vue";
+import { defineComponent, ref, onMounted, onUnmounted } from "vue";
+import { 
+  BulbOutlined,
+  BulbFilled,
+  MenuOutlined, 
+  CloseOutlined,
+  MailOutlined,
+  LinkedinOutlined
+} from "@ant-design/icons-vue";
 
 export default defineComponent({
   name: "App",
   components: {
-    MessageOutlined,
-    DownOutlined,
+    BulbOutlined,
+    BulbFilled,
+    MenuOutlined,
+    CloseOutlined,
+    MailOutlined,
+    LinkedinOutlined
   },
   setup() {
-    const isDarkMode = ref(false);
-    const showChat = ref(false);
+    const isDark = ref(false);
+    const mobileMenuOpen = ref(false);
+    const isScrolled = ref(false);
 
-    const toggleTheme = (checked: boolean) => {
-      isDarkMode.value = checked;
-      document.body.className = checked ? "dark-mode" : "";
+    const toggleTheme = () => {
+      isDark.value = !isDark.value;
+      localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light');
     };
 
+    const closeMobileMenu = () => {
+      mobileMenuOpen.value = false;
+    };
+
+    const handleScroll = () => {
+      isScrolled.value = window.scrollY > 20;
+    };
+
+    onMounted(() => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        isDark.value = savedTheme === 'dark';
+      } else {
+        isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light');
+      window.addEventListener('scroll', handleScroll);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleScroll);
+    });
+
     return {
-      isDarkMode,
+      isDark,
+      mobileMenuOpen,
+      isScrolled,
       toggleTheme,
-      showChat,
+      closeMobileMenu
     };
   },
 });
 </script>
 
 <style>
-/* Dark Mode Styles */
-.dark-mode {
-  background-color: #1a1a1a;
-  color: white;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --color-primary: #ff69b4;
+  --color-primary-hover: #ff85c8;
+  --color-bg: #fff5f5;
+  --color-bg-secondary: #fff0f5;
+  --color-bg-card: #ffffff;
+  --color-text: #5d4e60;
+  --color-text-secondary: #9a8a9a;
+  --color-border: #ffd1dc;
+  --glass-bg: rgba(255, 245, 245, 0.8);
+  --glass-border: rgba(255, 209, 220, 0.3);
+  --shadow-sm: 0 1px 2px rgba(255, 182, 193, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(255, 182, 193, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(255, 182, 193, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(255, 182, 193, 0.3);
+  --gradient-primary: linear-gradient(135deg, #ff69b4 0%, #ff85c8 100%);
+  --gradient-bg: linear-gradient(135deg, #fff5f5 0%, #fff0f5 100%);
 }
 
-.dark-mode a-layout-content {
-  background-color: #2b2b2b;
+[data-theme="dark"] {
+  --color-bg: #1a1625;
+  --color-bg-secondary: #2d2640;
+  --color-bg-card: #352945;
+  --color-text: #f0e6ee;
+  --color-text-secondary: #b8a4b8;
+  --color-border: #4a3f5c;
+  --glass-bg: rgba(45, 38, 64, 0.8);
+  --glass-border: rgba(74, 63, 92, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  --gradient-bg: linear-gradient(135deg, #1a1625 0%, #2d2640 100%);
 }
 
-.dark-mode a-layout-footer {
-  background-color: #001529;
-  color: white;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.dark-mode a-menu {
-  background-color: #001529;
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.dark-mode a-menu-item {
-  color: white;
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gradient-bg);
 }
 
-/* Navigation Links */
-.nav-link {
-  color: white;
-  text-decoration: none;
-  padding: 0 15px;
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem 2rem;
   transition: all 0.3s ease;
-  border-radius: 4px;
+  background: transparent;
+}
+
+.navbar.scrolled {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+}
+
+.navbar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  padding: 0.625rem 1.25rem;
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .nav-link:hover {
-  color: white;
-  background-color: #1890ff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
+  color: var(--color-primary);
+  background: rgba(255, 105, 180, 0.1);
 }
 
-/* Floating Button */
-.floating-button {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background-color: #1890ff;
-  color: white;
+.nav-link.router-link-active {
+  color: var(--color-primary);
+  background: rgba(255, 105, 180, 0.1);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   border: none;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 28px;
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 1.125rem;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-toggle:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: var(--color-bg-card);
+  color: var(--color-text);
   cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 999;
+  font-size: 1.25rem;
 }
 
-.floating-button:hover {
-  background-color: #40a9ff;
-  transform: scale(1.1);
+.main-content {
+  flex: 1;
+  padding-top: 80px;
 }
 
-.floating-button svg {
-  font-size: 24px;
+.footer {
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  padding: 2rem;
+  margin-top: auto;
 }
 
-/* Chatbot Panel */
-.chatbot-container {
-  position: fixed;
-  bottom: 100px;
-  right: 30px;
-  width: 400px;
-  height: 600px;
-  max-width: 90vw;
-  z-index: 998;
-  border-radius: 16px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transform: translateY(100%);
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.social-link {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  font-size: 1.25rem;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+
+.social-link:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.copyright {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-  pointer-events: none;
-  transition: transform 0.35s ease, opacity 0.35s ease;
-  will-change: transform, opacity;
 }
 
-.chatbot-visible {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem;
+  }
+
+  .nav-menu {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    right: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    flex-direction: column;
+    padding: 1rem;
+    gap: 0.5rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .nav-menu.mobile-open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-link {
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 </style>
