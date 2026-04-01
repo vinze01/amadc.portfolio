@@ -40,7 +40,14 @@
           <a-collapse :bordered="false" class="collapse-custom">
             <a-collapse-panel key="1" header="View Responsibilities">
               <div class="responsibilities">
-                <p>Responsibilities to follow...</p>
+                <ul>
+                  <li>Request official rosters for quarterly performance reviews from HRIS</li>
+                  <li>Creation of performance review templates for heroes, leaders, managers and up</li>
+                  <li>Prepare, collect, and encode Quarterly Performance and Step-Up Performance Review results</li>
+                  <li>Create and update Job Descriptions and Key Performance Indicators</li>
+                  <li>Help HR Officer in facilitating Succession Planning</li>
+                  <li>Perform any tasks that may be assigned from time to time</li>
+                </ul>
               </div>
             </a-collapse-panel>
           </a-collapse>
